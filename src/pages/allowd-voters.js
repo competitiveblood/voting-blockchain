@@ -1,11 +1,11 @@
 import React from 'react'
 
-const home = () => {
+const allowdVoters = () => {
   return (
     <div>
-      home
+      
     </div>
   )
 }
 
-export default home
+export default allowdVoters
