@@ -1,19 +1,19 @@
-//SPDX-license-Identifier: UNLICENSED
+// SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.9;
 
-import "@openzepplin/contracts/utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 import "hardhat/console.sol";
 
-contract Create{
-    using Counters for Counters.counter;
+contract Create {
+    using Counters for Counters.Counter;
 
-    Counters.Counter public _voterId;
-    Counters.Counter public_candidateId;
+    Counters.Counter private _voterId;
+    Counters.Counter private _candidateId;
 
     address public votingOrganizer;
 
-    //CANDIDATE FOR votingOrganizer
-    struct Candidate{
+    // Candidate structure
+    struct Candidate {
         uint256 candidateId;
         string age;
         string name;
@@ -24,28 +24,20 @@ contract Create{
     }
 
     event CandidateCreate(
-        uint256 indexed candidateId;
-        string age;
-        string name;
-        string image;
-        uint256 voteCount;
-        address _address;
-        string ipfs;
+        uint256 indexed candidateId,
+        string age,
+        string name,
+        string image,
+        uint256 voteCount,
+        address _address,
+        string ipfs
     );
 
     address[] public candidateAddress;
     mapping(address => Candidate) public candidates;
 
-    ////////END OF CANDIDATE DATA
-
-    //--------VOTER DATA
-
-    address[] public votedVoters;
-
-    address[] public votersAddress;
-    mapping(address => Voter) public voters;
-
-    struct Voter{
+    // Voter structure
+    struct Voter {
         uint256 voter_voterId;
         string voter_name;
         string voter_image;
@@ -53,47 +45,51 @@ contract Create{
         uint256 voter_allowed;
         bool voter_voted;
         uint256 voter_vote;
-        string voter_ipfs; 
+        string voter_ipfs;
     }
 
     event VoterCreated(
-        uint256 indexed voter_voterId;
-        string voter_name;
-        string voter_image;
-        address voter_address;
-        uint256 voter_allowed;
-        bool voter_voted;
-        uint256 voter_vote;
-        string voter_ipfs; 
-
+        uint256 indexed voter_voterId,
+        string voter_name,
+        string voter_image,
+        address voter_address,
+        uint256 voter_allowed,
+        bool voter_voted,
+        uint256 voter_vote,
+        string voter_ipfs
     );
-    // -------- END OF VOTER DATA
-    constructor(){
+
+    address[] public votedVoters;
+    address[] public votersAddress;
+    mapping(address => Voter) public voters;
+
+    constructor() {
         votingOrganizer = msg.sender;
     }
+
     function setCandidates(
         address _address,
         string memory _age,
         string memory _name,
         string memory _image,
         string memory _ipfs
-    ) public{
+    ) public {
         require(
             votingOrganizer == msg.sender,
-            "Only orgainzer can authorized candidate"
+            "Only organizer can authorize candidate"
         );
         _candidateId.increment();
 
         uint256 idNumber = _candidateId.current();
 
-        Candidate storage candidate = candidate[_address];
+        Candidate storage candidate = candidates[_address];
 
         candidate.age = _age;
         candidate.name = _name;
         candidate.candidateId = idNumber;
         candidate.image = _image;
         candidate.ipfs = _ipfs;
-        candidate.voterCount = 0;
+        candidate.voteCount = 0;
         candidate._address = _address;
 
         candidateAddress.push(_address);
@@ -106,30 +102,123 @@ contract Create{
             candidate.voteCount,
             _address,
             _ipfs
-
-
         );
     }
 
-    function getCandidate() public view returns (address[] memory){
-        return candidateAddress;
-    }
-
-    function getCandidateLength() public view returns (uint256){
-        return candidateAddress.length;
-    }
-
-    function getCandidate(address_address) public view returns(string memory, string memory, uint256, string memory,uint256, string memory, address ){
-        return(
-            candidates[_address].age,
-            candidates[_address].name,
-            candidates[_address].candidateId,
-            candidates[_address].image,
-            candidates[_address].voteCount,
-            candidates[_address].ipfs,
-            candidates[_address]._address,
-
+    function getCandidate(address _address)
+        public
+        view
+        returns (
+            string memory,
+            string memory,
+            uint256,
+            string memory,
+            uint256,
+            string memory,
+            address
+        )
+    {
+        Candidate storage candidate = candidates[_address];
+        return (
+            candidate.age,
+            candidate.name,
+            candidate.candidateId,
+            candidate.image,
+            candidate.voteCount,
+            candidate.ipfs,
+            candidate._address
         );
     }
 
+    function voterRight(
+        address _address,
+        string memory _name,
+        string memory _image,
+        string memory _ipfs
+    ) public {
+        require(
+            votingOrganizer == msg.sender,
+            "Only organizer can create voter, not you"
+        );
+
+        _voterId.increment();
+
+        uint256 idNumber = _voterId.current();
+
+        Voter storage voter = voters[_address];
+
+        require(voter.voter_allowed == 0, "Voter already registered");
+
+        voter.voter_allowed = 1;
+        voter.voter_voterId = idNumber;
+        voter.voter_name = _name;
+        voter.voter_image = _image;
+        voter.voter_address = _address;
+        voter.voter_vote = 1000;
+        voter.voter_ipfs = _ipfs;
+
+        votersAddress.push(_address);
+
+        emit VoterCreated(
+            idNumber,
+            _name,
+            _image,
+            _address,
+            voter.voter_allowed,
+            false,
+            voter.voter_vote,
+            _ipfs
+        );
+    }
+
+    function vote(address _candidateAddress, uint256 _candidateVoteId) external {
+        Voter storage voter = voters[msg.sender];
+
+        require(!voter.voter_voted, "You have already voted");
+        require(voter.voter_allowed != 0, "You are not allowed to vote");
+
+        voter.voter_voted = true;
+        voter.voter_vote = _candidateVoteId;
+
+        votedVoters.push(msg.sender);
+
+        candidates[_candidateAddress].voteCount += voter.voter_allowed;
+    }
+
+    function getVoterdata(address _address)
+        public
+        view
+        returns (
+            uint256,
+            string memory,
+            string memory,
+            address,
+            string memory,
+            uint256,
+            bool
+        )
+    {
+        Voter storage voter = voters[_address];
+        return (
+            voter.voter_voterId,
+            voter.voter_name,
+            voter.voter_image,
+            voter.voter_address,
+            voter.voter_ipfs,
+            voter.voter_allowed,
+            voter.voter_voted
+        );
+    }
+
+    function getVoterLength() public view returns (uint256) {
+        return votersAddress.length;
+    }
+
+    function getVoterList() public view returns (address[] memory) {
+        return votersAddress;
+    }
+
+    function getVotedVoterList() public view returns (address[] memory) {
+        return votedVoters;
+    }
 }
