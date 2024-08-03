@@ -1,43 +1,42 @@
-import React, {useState,useEffect} from 'react';
+import React, { useState, useEffect } from 'react';
 import Web3Modal from 'web3modal';
-import {ethers} from "ethers";
-import {create as ipfsHttpClient } from"ipfs-http-client";
+import { ethers } from "ethers";
+import { create as ipfsHttpClient } from "ipfs-http-client";
 import axios from "axios";
-import { useRouter} from "next/router";
+import { useRouter } from "next/router";
 
-//INTERNAL IMPORT
-import {VotingAddress, VotingAddressABI} from './constants'
+// INTERNAL IMPORT
+import { VotingAddress, VotingAddressABI } from './constants';
 
-const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0')
-new ethers.Contract(votingAddress, VotingAdressABI, signerOrProvider);
+const client = ipfsHttpClient('https://ipfs.infura.io:5001/api/v0');
+
+const fetchContract = (signerOrProvider) =>
+  new ethers.Contract(VotingAddress, VotingAddressABI, signerOrProvider);
 
 export const VotingContext = React.createContext();
 
+export const VotingProvider = ({ children }) => {
+const votingTitle = "My first smart contract app";
+const router = useRouter();
+const [currentAccount, setCurrentAccount] = useState('');
+const [candidateLength, setCandidateLength] = useState('');
+const pushCandidate=[];
+const candidateIndex = [];
+const [candidateArray, setCandidateArray] = useState(pushCandidate);
 
-export const VotingProvider = ({children}) => {
-    const votingTitle = 'My first contract app'
+//-------END OF A CANDIDATE DATA
 
-    return(
-        <VotingContext.Provider value={{votingTitle}}>
-            {childern}
+const[error, setError] = useState(' ');
+const highestVote = [];
 
-        </VotingContext.Provider>
-    )
+//-------END OF A VOTE DATA
 
-}
+const pushVoter = [];
+const[voterArray]
 
-
-
- 
-
-
-
-const Voter = () => {
-  return (
-    <div>
-      
-    </div>
-  )
-}
-
-export default Voter
+return(
+  <VotingContext.Provider value = {{votingTitle}}>
+    {children}
+  </VotingContext.Provider>
+);
+};
